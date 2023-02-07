@@ -19,3 +19,7 @@ endif
 		-e STOCKS_API_KEY=${STOCKS_API_KEY} \
 		-v $(shell pwd)/app:/app \
 		-p $(APP_PORT):$(APP_PORT) $(IMAGE_NAME):$(IMAGE_TAG)
+
+test: build
+	docker run --rm -it \
+		$(IMAGE_NAME):$(IMAGE_TAG) pytest -vv
