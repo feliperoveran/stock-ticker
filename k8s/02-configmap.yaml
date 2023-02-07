@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  SYMBOL: "MSFT"
+  NDAYS: "7"
+  STOCKS_API_HOST: "https://www.alphavantage.co/"
+  LOG_LEVEL: "DEBUG"
+kind: ConfigMap
+metadata:
+  name: stock-ticker-config
+  namespace: forgerock

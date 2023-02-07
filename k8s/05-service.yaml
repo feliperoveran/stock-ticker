@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: stock-ticker
+  name: stock-ticker-svc
+  namespace: forgerock
+spec:
+  ports:
+  - name: default
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: stock-ticker
+  type: ClusterIP

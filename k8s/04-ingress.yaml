@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    # cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/rewrite-target: /$2$3
+  name: forgerock-local
+  namespace: forgerock
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - backend:
+          service:
+            name: stock-ticker-svc
+            port:
+              number: 8000
+        path: /stock-ticker(/|$)(.*)
+        pathType: Prefix

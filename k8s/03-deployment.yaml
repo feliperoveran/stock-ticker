@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: stock-ticker
+  name: stock-ticker
+  namespace: forgerock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-ticker
+  template:
+    metadata:
+      labels:
+        app: stock-ticker
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: LOG_LEVEL
+          value: DEBUG
+        - name: SYMBOL
+          valueFrom:
+            configMapKeyRef:
+              name: stock-ticker-config
+              key: SYMBOL
+        - name: NDAYS
+          valueFrom:
+            configMapKeyRef:
+              name: stock-ticker-config
+              key: NDAYS
+        - name: STOCKS_API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: stock-ticker-config
+              key: STOCKS_API_HOST
+        - name: STOCKS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stock-ticker-secrets
+              key: apikey
+        image: stock-ticker:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+          name: default
+          protocol: TCP
+        resources: {}
+      #   volumeMounts:
+      #   - mountPath: /here
+      #     name: very-secret
+      #     readOnly: true
+      # volumes:
+      # - name: very-secret
+      #   secret:
+      #     defaultMode: 420
+      #     secretName: stock-ticker
