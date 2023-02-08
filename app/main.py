@@ -5,11 +5,11 @@ from models import (
     DailyData,
     Problem,
 )
+from src.stock_api import StockApi
 
 import logging
 import os
 import sys
-import requests
 
 
 logging.basicConfig(stream=sys.stdout, level=os.getenv("LOG_LEVEL", "INFO"))
@@ -22,49 +22,18 @@ app = FastAPI(
 )
 
 
-@app.get(
-    '/ndays',
-    response_model=NDaysResponse,
-    responses={'default': {'model': Problem}},
-)
-async def get_ndays_average(
+@app.get('/ndays')
+def get_ndays_average(
     response: Response
 ) -> Union[NDaysResponse, Problem]:
     """
     Response
     """
-    # get variables from the env
-    api_host = os.getenv("STOCKS_API_HOST")
-    api_key = os.getenv("STOCKS_API_KEY")
-    symbol = os.getenv("SYMBOL")
-    ndays = int(os.getenv("NDAYS"))
+    stock_api = StockApi()
 
-    # log values
-    logger.debug("API_HOST: {api_host}")
-    logger.debug("API_KEY: {api_key}")
-    logger.debug("SYMBOL: {symbol}")
-    logger.debug("NDAYS: {ndays}")
+    ndays_timeseries_data = stock_api.ndays_timeseries_data()
 
-    # call the API and get the stock data
-    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
-    response = requests.get(api_url)
-    response_json = response.json()
-    timeseries = response_json["Time Series (Daily)"]
-
-    # get data
-    dates = list(timeseries.keys())[:ndays]
-    logger.info(f"Will get data for days: {dates}")
-
-    # get all data
-    data = {date: timeseries[date] for date in dates}
-    logger.info(f"Data: {data}")
-
-    # closing price average
-    DATA_CLOSING_PRICE_KEY = "4. close"
-    prices = [float(day_data[DATA_CLOSING_PRICE_KEY]) for day_data in data.values()]
-    average = sum(prices) / ndays
-    logger.info(f"Prices: {prices}")
-    logger.info(f"Average price: {average}")
+    average = stock_api.average_closing_price()
 
     response.status_code = status.HTTP_200_OK
 
@@ -74,14 +43,14 @@ async def get_ndays_average(
         ndays=os.getenv("NDAYS"),
         daily_data={
             date: DailyData(
-                open=data[date]["1. open"],
-                high=data[date]["2. high"],
-                low=data[date]["3. low"],
-                close=data[date]["4. close"],
-                adjusted_close=data[date]["5. adjusted close"],
-                volume=data[date]["6. volume"],
-                dividend_amount=data[date]["7. dividend amount"],
-                split_coefficient=data[date]["8. split coefficient"]
-            ) for date in dates
+                open=ndays_timeseries_data[date].open,
+                high=ndays_timeseries_data[date].high,
+                low=ndays_timeseries_data[date].low,
+                close=ndays_timeseries_data[date].close,
+                adjusted_close=ndays_timeseries_data[date].adjusted_close,
+                volume=ndays_timeseries_data[date].volume,
+                dividend_amount=ndays_timeseries_data[date].dividend_amount,
+                split_coefficient=ndays_timeseries_data[date].split_coefficient
+            ) for date in ndays_timeseries_data.keys()
         }
     )
