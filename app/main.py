@@ -6,6 +6,7 @@ from models import (
     Problem,
 )
 from src.stock_api import StockApi
+from prometheus_fastapi_instrumentator import Instrumentator
 
 import logging
 import os
@@ -23,6 +24,12 @@ app = FastAPI(
 
 # Singleton so we can cache the response
 stock_api = StockApi()
+
+
+# Enable prometheus instrumentation to expose metrics under /metrics
+@app.on_event("startup")
+async def startup():
+    Instrumentator(env_var_name="ENABLE_METRICS").instrument(app).expose(app)
 
 
 @app.get('/ndays')
@@ -47,7 +54,7 @@ def get_ndays_average(
             instance=app.title
         )
 
-    average = stock_api.average_closing_price()
+    average = stock_api.average_closing_price(ndays_timeseries_data)
 
     response.status_code = status.HTTP_200_OK
 

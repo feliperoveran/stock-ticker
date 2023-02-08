@@ -145,15 +145,10 @@ def test_average_closing_price(mocker):
         def __init__(self, close):
             self.close = close
 
-    mocked_ndays_timeseries_data = {
+    ndays_timeseries_data = {
         "2023-02-06": MockTimeseriesData(10),
         "2023-02-05": MockTimeseriesData(15),
         "2023-02-04": MockTimeseriesData(10),
     }
 
-    mocker.patch(
-        "src.stock_api.StockApi.ndays_timeseries_data",
-        lambda _: mocked_ndays_timeseries_data
-    )
-
-    assert StockApi(ndays=3).average_closing_price() == 11.67
+    assert StockApi(ndays=3).average_closing_price(ndays_timeseries_data) == 11.67

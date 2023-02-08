@@ -19,7 +19,10 @@ spec:
       - name: app
         env:
         - name: LOG_LEVEL
-          value: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: stock-ticker-config
+              key: LOG_LEVEL
         - name: SYMBOL
           valueFrom:
             configMapKeyRef:
@@ -40,6 +43,11 @@ spec:
             secretKeyRef:
               name: stock-ticker-secrets
               key: apikey
+        - name: ENABLE_METRICS
+          valueFrom:
+            configMapKeyRef:
+              name: stock-ticker-config
+              key: ENABLE_METRICS
         image: stock-ticker:latest
         imagePullPolicy: Never
         ports:
@@ -47,12 +55,3 @@ spec:
           name: default
           protocol: TCP
         resources: {}
-      #   volumeMounts:
-      #   - mountPath: /here
-      #     name: very-secret
-      #     readOnly: true
-      # volumes:
-      # - name: very-secret
-      #   secret:
-      #     defaultMode: 420
-      #     secretName: stock-ticker

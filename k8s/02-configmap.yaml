@@ -3,7 +3,8 @@ data:
   SYMBOL: "MSFT"
   NDAYS: "7"
   STOCKS_API_HOST: "https://www.alphavantage.co/"
-  LOG_LEVEL: "DEBUG"
+  LOG_LEVEL: "INFO"
+  ENABLE_METRICS: "true"
 kind: ConfigMap
 metadata:
   name: stock-ticker-config

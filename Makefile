@@ -25,6 +25,7 @@ run: check_env_vars build
 		-e SYMBOL=MSFT \
 		-e STOCKS_API_HOST="https://www.alphavantage.co" \
 		-e STOCKS_API_KEY=${STOCKS_API_KEY} \
+		-e ENABLE_METRICS=true \
 		-v $(shell pwd)/app:/app \
 		-p $(APP_PORT):$(APP_PORT) $(IMAGE_NAME):$(IMAGE_TAG)
 

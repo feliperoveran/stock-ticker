@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from src.stock_timeseries import StockTimeseries
 from requests.exceptions import HTTPError
+from src.metrics import prometheus_custom_metrics
 
 import logging
 import os
@@ -57,6 +58,9 @@ class StockApi():
                 )
             )
 
+            # increment the Prometheus counter
+            prometheus_custom_metrics.prometheus_cache_hit_counter.inc()
+
             return self.api_response
 
     def timeseries_data(self):
@@ -81,9 +85,7 @@ class StockApi():
 
         return ndays_data
 
-    def average_closing_price(self):
-        ndays_timeseries_data = self.ndays_timeseries_data()
-
+    def average_closing_price(self, ndays_timeseries_data):
         prices = [float(day_data.close) for day_data in ndays_timeseries_data.values()]
 
         return round(sum(prices) / self.ndays, 2)
