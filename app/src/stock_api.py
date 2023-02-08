@@ -10,7 +10,7 @@ import requests
 
 TIMESERIES_KEY = "Time Series (Daily)"
 # In-memory cache expiration
-API_REFRESH_FREQUENCY = timedelta(minutes=os.getenv("API_REFRESH_FREQUENCY", 60))
+API_REFRESH_FREQUENCY_MINUTES = timedelta(minutes=os.getenv("API_REFRESH_FREQUENCY_MINUTES", 60))
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class StockApi():
         self.last_refreshed = None
 
     def fetch_data(self):
-        if self.last_refreshed is None or datetime.now() > self.last_refreshed + API_REFRESH_FREQUENCY:
+        if self.last_refreshed is None or datetime.now() > self.last_refreshed + API_REFRESH_FREQUENCY_MINUTES:
             # call the API and get the stock data
             url = f"{self.api_host}/query?apikey={self.api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={self.symbol}"
 
@@ -54,7 +54,7 @@ class StockApi():
             logger.info(
                 "Reusing API response from cache. Last refreshed at {}. Will be refreshed at {}".format(
                     self.last_refreshed,
-                    self.last_refreshed + API_REFRESH_FREQUENCY
+                    self.last_refreshed + API_REFRESH_FREQUENCY_MINUTES
                 )
             )
 
