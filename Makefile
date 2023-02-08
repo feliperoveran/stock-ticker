@@ -30,7 +30,7 @@ test: build
 		-e SYMBOL=BESTSTOCK \
 		-e STOCKS_API_HOST="https://example.com" \
 		-e STOCKS_API_KEY=123 \
-		$(IMAGE_NAME):$(IMAGE_TAG) pytest -vv
+		$(IMAGE_NAME):$(IMAGE_TAG) pytest -vv --cov
 
 deploy: check_env_vars build
 	@kubectl --context $(KUBECTL_CONTEXT) apply -f k8s/
