@@ -41,6 +41,9 @@ deploy: check_env_vars build
 	@kubectl --context $(KUBECTL_CONTEXT) create secret generic $(K8S_SECRET_NAME) \
 		-n $(K8S_NAMESPACE) \
 		--from-literal=apikey=${STOCKS_API_KEY} || true
+	$(MAKE) rollout-restart
+
+rollout-restart:
 	@kubectl --context $(KUBECTL_CONTEXT) rollout restart deploy -n $(K8S_NAMESPACE)
 
 clean:
@@ -48,6 +51,9 @@ clean:
 
 ndays:
 	@curl localhost:8080/stock-ticker/ndays; echo
+
+logs:
+	@kubectl --context $(KUBECTL_CONTEXT) logs -n $(K8S_NAMESPACE) -l app=stock-ticker -f
 
 configure-ingress:
 	@kubectl --context=$(KUBECTL_CONTEXT) create ns ingress-nginx || true
