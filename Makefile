@@ -1,4 +1,5 @@
 IMAGE_NAME ?= stock-ticker
+TEST_IMAGE_NAME = $(IMAGE_NAME)-tests
 IMAGE_TAG ?= latest
 APP_PORT ?= 8000
 KUBECTL_CONTEXT ?= docker-desktop
@@ -6,7 +7,10 @@ K8S_NAMESPACE ?= forgerock
 K8S_SECRET_NAME ?= stock-ticker-secrets
 
 build:
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) --target api .
+
+build-tests:
+	docker build -t $(TEST_IMAGE_NAME):$(IMAGE_TAG) --target test .
 
 check_env_vars:
 ifndef STOCKS_API_KEY
@@ -24,13 +28,13 @@ run: check_env_vars build
 		-v $(shell pwd)/app:/app \
 		-p $(APP_PORT):$(APP_PORT) $(IMAGE_NAME):$(IMAGE_TAG)
 
-test: build
+test: build-tests
 	docker run --rm -it \
 		-e NDAYS=3 \
 		-e SYMBOL=BESTSTOCK \
 		-e STOCKS_API_HOST="https://example.com" \
 		-e STOCKS_API_KEY=123 \
-		$(IMAGE_NAME):$(IMAGE_TAG) pytest -vv --cov
+		$(TEST_IMAGE_NAME):$(IMAGE_TAG)
 
 deploy: check_env_vars build
 	@kubectl --context $(KUBECTL_CONTEXT) apply -f k8s/
