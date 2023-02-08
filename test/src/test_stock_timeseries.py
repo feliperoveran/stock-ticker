@@ -1,5 +1,6 @@
 from src.stock_timeseries import (
     StockTimeseries,
+    StockTimeseriesDeserializeException
 )
 
 import pytest
@@ -27,3 +28,14 @@ def test_timeseries_data_parsing():
     assert stock_timeseries.volume == "22485906"
     assert stock_timeseries.dividend_amount == "0.0000"
     assert stock_timeseries.split_coefficient == "1.0"
+
+
+def test_timeseries_missing_key_raises_exception():
+    timeseries_data = {
+      "1. open": "257.44"
+    }
+
+    with pytest.raises(StockTimeseriesDeserializeException) as exception:
+        StockTimeseries(timeseries_data)
+
+    assert exception.value.args[0] == "Key '2. high' is not present in timeseries data."

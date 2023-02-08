@@ -1,11 +1,14 @@
 from src.stock_api import (
     StockApi,
+    StockApiException,
+    StockApiUnsupportedApiResponseException,
     TIMESERIES_KEY
 )
 
 import requests_mock
 import json
 import os
+import pytest
 
 
 """
@@ -33,6 +36,25 @@ def test_fetch_data():
     assert fetched_data == api_response
 
 
+def test_fetch_data_api_error():
+    api_host = os.getenv("STOCKS_API_HOST")
+    api_key = os.getenv("STOCKS_API_KEY")
+    symbol = os.getenv("SYMBOL")
+    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
+
+    with requests_mock.Mocker(real_http=True) as m:
+        m.register_uri(
+            "GET",
+            api_url,
+            status_code=401
+        )
+
+        with pytest.raises(StockApiException) as exception:
+            StockApi().fetch_data()
+
+    assert "Error occurred when calling the API" in exception.value.args[0]
+
+
 """
 timeseries_data
 """
@@ -51,6 +73,18 @@ def test_timeseries_data(mocker):
     )
 
     assert StockApi().timeseries_data() == mocked_response[TIMESERIES_KEY]
+
+
+def test_timeseries_data_missing_key(mocker):
+    mocker.patch(
+        "src.stock_api.StockApi.fetch_data",
+        lambda _: {}
+    )
+
+    with pytest.raises(StockApiUnsupportedApiResponseException) as exception:
+        StockApi().timeseries_data()
+
+    assert f"Key '{TIMESERIES_KEY}' is not present" in exception.value.args[0]
 
 
 """

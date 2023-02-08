@@ -1,4 +1,5 @@
 from src.stock_timeseries import StockTimeseries
+from requests.exceptions import HTTPError
 
 import logging
 import os
@@ -31,14 +32,24 @@ class StockApi():
 
         response = requests.get(url)
 
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPError as exception:
+            raise StockApiException(self.api_host, exception)
 
         return response.json()
 
     def timeseries_data(self):
         api_response = self.fetch_data()
 
-        return api_response[TIMESERIES_KEY]
+        try:
+            return api_response[TIMESERIES_KEY]
+        except KeyError as e:
+            key = e.args[0]
+
+            logger.error(f"Error when parsing the API response. Key '{key}' is missing!")
+
+            raise StockApiUnsupportedApiResponseException(key)
 
     def ndays_timeseries_data(self):
         timeseries_data = self.timeseries_data()
@@ -56,3 +67,13 @@ class StockApi():
         prices = [float(day_data.close) for day_data in ndays_timeseries_data.values()]
 
         return sum(prices) / self.ndays
+
+
+class StockApiException(Exception):
+    def __init__(self, host, exception):
+        super().__init__(f"Error occurred when calling the API at {host}: {exception}")
+
+
+class StockApiUnsupportedApiResponseException(Exception):
+    def __init__(self, key):
+        super().__init__(f"Key '{key}' is not present in API response.")

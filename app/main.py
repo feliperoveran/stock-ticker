@@ -33,6 +33,21 @@ def get_ndays_average(
 
     ndays_timeseries_data = stock_api.ndays_timeseries_data()
 
+    try:
+        ndays_timeseries_data = stock_api.ndays_timeseries_data()
+    except Exception as exception:
+        logger.error(f"An exception occurred: {exception}")
+
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        return Problem(
+            type="/ndays",
+            title="Internal Error",
+            status=500,
+            detail="An internal error occurred. Please check the logs for details.",
+            instance=app.title
+        )
+
     average = stock_api.average_closing_price()
 
     response.status_code = status.HTTP_200_OK
