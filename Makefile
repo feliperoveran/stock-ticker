@@ -17,15 +17,19 @@ endif
 
 run: check_env_vars build
 	docker run --rm -it \
-		-e NDAYS=3 \
+		-e NDAYS=7 \
 		-e SYMBOL=MSFT \
-		-e STOCKS_API_HOST="https://www.alphavantage.co/" \
+		-e STOCKS_API_HOST="https://www.alphavantage.co" \
 		-e STOCKS_API_KEY=${STOCKS_API_KEY} \
 		-v $(shell pwd)/app:/app \
 		-p $(APP_PORT):$(APP_PORT) $(IMAGE_NAME):$(IMAGE_TAG)
 
 test: build
 	docker run --rm -it \
+		-e NDAYS=3 \
+		-e SYMBOL=BESTSTOCK \
+		-e STOCKS_API_HOST="https://example.com" \
+		-e STOCKS_API_KEY=123 \
 		$(IMAGE_NAME):$(IMAGE_TAG) pytest -vv
 
 deploy: check_env_vars build

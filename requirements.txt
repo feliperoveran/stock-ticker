@@ -5,3 +5,4 @@ requests==2.28.2
 # TODO: move to a separate requirements file
 pytest==7.2.1
 requests_mock==1.10.0
+pytest-mock==3.10.0

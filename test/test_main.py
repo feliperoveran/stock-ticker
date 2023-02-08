@@ -1,21 +1,19 @@
 from fastapi.testclient import TestClient
-from main import app
+from main import app, stock_api
 
 import requests_mock
 import json
+import os
 
 
 client = TestClient(app)
 
 
-def test_ndays(monkeypatch):
-    # mock env variables
-    monkeypatch.setenv("STOCKS_API_HOST", "https://example.com")
-    monkeypatch.setenv("STOCKS_API_KEY", "123")
-    monkeypatch.setenv("SYMBOL", "BESTSTOCK")
-    monkeypatch.setenv("NDAYS", "3")
-
-    api_url = "https://example.com/query?apikey=123&function=TIME_SERIES_DAILY_ADJUSTED&symbol=BESTSTOCK"
+def test_ndays():
+    api_host = os.getenv("STOCKS_API_HOST")
+    api_key = os.getenv("STOCKS_API_KEY")
+    symbol = os.getenv("SYMBOL")
+    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
 
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri(
@@ -64,4 +62,62 @@ def test_ndays(monkeypatch):
                 "split_coefficient": 1
             }
         }
+    }
+
+
+def test_ndays_api_invalid_response():
+    api_host = os.getenv("STOCKS_API_HOST")
+    api_key = os.getenv("STOCKS_API_KEY")
+    symbol = os.getenv("SYMBOL")
+    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
+
+    # reset stock_api cache to force a re-fetch and mock the failed data
+    stock_api.last_refreshed = None
+
+    with requests_mock.Mocker(real_http=True) as m:
+        m.register_uri(
+            "GET",
+            api_url,
+            json={
+                "invalid": "response"
+            }
+        )
+
+        response = client.get("/ndays")
+
+    assert response.json() == {
+        "detail": "An internal error occurred. Please check the logs for details.",
+        "instance": "Stock Ticker",
+        "status": 500,
+        "title": "Internal Error",
+        "type": "/ndays"
+    }
+
+
+def test_ndays_api_failure():
+    api_host = os.getenv("STOCKS_API_HOST")
+    api_key = os.getenv("STOCKS_API_KEY")
+    symbol = os.getenv("SYMBOL")
+    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
+
+    # reset stock_api cache to force a re-fetch and mock the failed data
+    stock_api.last_refreshed = None
+
+    with requests_mock.Mocker(real_http=True) as m:
+        m.register_uri(
+            "GET",
+            api_url,
+            status_code=401
+        )
+
+        response = client.get("/ndays")
+
+    assert response.status_code == 500
+
+    assert response.json() == {
+        "detail": "An internal error occurred. Please check the logs for details.",
+        "instance": "Stock Ticker",
+        "status": 500,
+        "title": "Internal Error",
+        "type": "/ndays"
     }
