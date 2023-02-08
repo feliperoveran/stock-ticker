@@ -36,6 +36,36 @@ def test_fetch_data():
     assert fetched_data == api_response
 
 
+def test_fetch_data_cache():
+    api_host = os.getenv("STOCKS_API_HOST")
+    api_key = os.getenv("STOCKS_API_KEY")
+    symbol = os.getenv("SYMBOL")
+    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
+
+    api_response = json.loads(open("fixtures/response.json").read())
+
+    with requests_mock.Mocker(real_http=True) as m:
+        m.register_uri(
+            "GET",
+            api_url,
+            json=api_response
+        )
+
+        # initialize the singleton
+        stock_api = StockApi()
+
+        # call a couple of times to check if cache has been used
+        stock_api.fetch_data()
+        stock_api.fetch_data()
+        stock_api.fetch_data()
+        fetched_data = stock_api.fetch_data()
+
+    assert fetched_data == api_response
+
+    # Check that the URL has been called once time and not 4 times
+    assert len(m.request_history) == 1
+
+
 def test_fetch_data_api_error():
     api_host = os.getenv("STOCKS_API_HOST")
     api_key = os.getenv("STOCKS_API_KEY")

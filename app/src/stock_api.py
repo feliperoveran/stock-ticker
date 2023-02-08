@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from src.stock_timeseries import StockTimeseries
 from requests.exceptions import HTTPError
 
@@ -7,6 +8,8 @@ import requests
 
 
 TIMESERIES_KEY = "Time Series (Daily)"
+# In-memory cache expiration
+API_REFRESH_FREQUENCY = timedelta(minutes=os.getenv("API_REFRESH_FREQUENCY", 60))
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +26,38 @@ class StockApi():
         self.api_key = api_key
         self.symbol = symbol
         self.ndays = ndays
+        # this is meant to be used as a singleton, so we cache the api response and avoid calling it many times
+        self.api_response = {}
+        self.last_refreshed = None
 
     def fetch_data(self):
-        # call the API and get the stock data
-        url = f"{self.api_host}/query?apikey={self.api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={self.symbol}"
+        if self.last_refreshed is None or datetime.now() > self.last_refreshed + API_REFRESH_FREQUENCY:
+            # call the API and get the stock data
+            url = f"{self.api_host}/query?apikey={self.api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={self.symbol}"
 
-        logger.info("Calling API at {}".format(url.replace(self.api_key, "<redacted>")))
+            logger.info("Calling API at {}".format(url.replace(self.api_key, "<redacted>")))
 
-        response = requests.get(url)
+            response = requests.get(url)
 
-        try:
-            response.raise_for_status()
-        except HTTPError as exception:
-            raise StockApiException(self.api_host, exception)
+            try:
+                response.raise_for_status()
+            except HTTPError as exception:
+                raise StockApiException(self.api_host, exception)
 
-        return response.json()
+            self.api_response = response.json()
+
+            self.last_refreshed = datetime.now()
+
+            return self.api_response
+        else:
+            logger.info(
+                "Reusing API response from cache. Last refreshed at {}. Will be refreshed at {}".format(
+                    self.last_refreshed,
+                    self.last_refreshed + API_REFRESH_FREQUENCY
+                )
+            )
+
+            return self.api_response
 
     def timeseries_data(self):
         api_response = self.fetch_data()

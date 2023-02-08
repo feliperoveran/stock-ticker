@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from main import app
+from main import app, stock_api
 
 import requests_mock
 import json
@@ -9,7 +9,7 @@ import os
 client = TestClient(app)
 
 
-def test_ndays(monkeypatch):
+def test_ndays():
     api_host = os.getenv("STOCKS_API_HOST")
     api_key = os.getenv("STOCKS_API_KEY")
     symbol = os.getenv("SYMBOL")
@@ -71,6 +71,9 @@ def test_ndays_api_invalid_response():
     symbol = os.getenv("SYMBOL")
     api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
 
+    # reset stock_api cache to force a re-fetch and mock the failed data
+    stock_api.last_refreshed = None
+
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri(
             "GET",
@@ -96,6 +99,9 @@ def test_ndays_api_failure():
     api_key = os.getenv("STOCKS_API_KEY")
     symbol = os.getenv("SYMBOL")
     api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
+
+    # reset stock_api cache to force a re-fetch and mock the failed data
+    stock_api.last_refreshed = None
 
     with requests_mock.Mocker(real_http=True) as m:
         m.register_uri(

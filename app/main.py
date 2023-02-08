@@ -21,6 +21,9 @@ app = FastAPI(
     version="0.0.1",
 )
 
+# Singleton so we can cache the response
+stock_api = StockApi()
+
 
 @app.get('/ndays')
 def get_ndays_average(
@@ -29,10 +32,6 @@ def get_ndays_average(
     """
     Response
     """
-    stock_api = StockApi()
-
-    ndays_timeseries_data = stock_api.ndays_timeseries_data()
-
     try:
         ndays_timeseries_data = stock_api.ndays_timeseries_data()
     except Exception as exception:
