@@ -52,9 +52,9 @@ def get_ndays_average(
     response.status_code = status.HTTP_200_OK
 
     return NDaysResponse(
-        average_closing_price=round(average, 2),
-        symbol=os.getenv("SYMBOL"),
-        ndays=os.getenv("NDAYS"),
+        average_closing_price=average,
+        symbol=stock_api.symbol,
+        ndays=stock_api.ndays,
         daily_data={
             date: DailyData(
                 open=ndays_timeseries_data[date].open,

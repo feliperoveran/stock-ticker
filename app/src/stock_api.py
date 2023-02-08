@@ -86,7 +86,7 @@ class StockApi():
 
         prices = [float(day_data.close) for day_data in ndays_timeseries_data.values()]
 
-        return sum(prices) / self.ndays
+        return round(sum(prices) / self.ndays, 2)
 
 
 class StockApiException(Exception):

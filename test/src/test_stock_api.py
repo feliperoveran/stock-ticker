@@ -5,9 +5,7 @@ from src.stock_api import (
     TIMESERIES_KEY
 )
 
-import requests_mock
 import json
-import os
 import pytest
 
 
@@ -16,71 +14,35 @@ fetch_data
 """
 
 
-def test_fetch_data():
-    api_host = os.getenv("STOCKS_API_HOST")
-    api_key = os.getenv("STOCKS_API_KEY")
-    symbol = os.getenv("SYMBOL")
-    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
-
+def test_fetch_data(mock_api_response):
     api_response = json.loads(open("fixtures/response.json").read())
 
-    with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri(
-            "GET",
-            api_url,
-            json=api_response
-        )
-
-        fetched_data = StockApi().fetch_data()
+    fetched_data = StockApi().fetch_data()
 
     assert fetched_data == api_response
 
 
-def test_fetch_data_cache():
-    api_host = os.getenv("STOCKS_API_HOST")
-    api_key = os.getenv("STOCKS_API_KEY")
-    symbol = os.getenv("SYMBOL")
-    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
-
+def test_fetch_data_cache(mock_api_response):
     api_response = json.loads(open("fixtures/response.json").read())
 
-    with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri(
-            "GET",
-            api_url,
-            json=api_response
-        )
+    # initialize the singleton
+    stock_api = StockApi()
 
-        # initialize the singleton
-        stock_api = StockApi()
-
-        # call a couple of times to check if cache has been used
-        stock_api.fetch_data()
-        stock_api.fetch_data()
-        stock_api.fetch_data()
-        fetched_data = stock_api.fetch_data()
+    # call a couple of times to check if cache has been used
+    stock_api.fetch_data()
+    stock_api.fetch_data()
+    stock_api.fetch_data()
+    fetched_data = stock_api.fetch_data()
 
     assert fetched_data == api_response
 
     # Check that the URL has been called once time and not 4 times
-    assert len(m.request_history) == 1
+    assert len(mock_api_response.mock.request_history) == 1
 
 
-def test_fetch_data_api_error():
-    api_host = os.getenv("STOCKS_API_HOST")
-    api_key = os.getenv("STOCKS_API_KEY")
-    symbol = os.getenv("SYMBOL")
-    api_url = f"{api_host}/query?apikey={api_key}&function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}"
-
-    with requests_mock.Mocker(real_http=True) as m:
-        m.register_uri(
-            "GET",
-            api_url,
-            status_code=401
-        )
-
-        with pytest.raises(StockApiException) as exception:
-            StockApi().fetch_data()
+def test_fetch_data_api_error(mock_api_error_response):
+    with pytest.raises(StockApiException) as exception:
+        StockApi().fetch_data()
 
     assert "Error occurred when calling the API" in exception.value.args[0]
 
@@ -186,7 +148,7 @@ def test_average_closing_price(mocker):
     mocked_ndays_timeseries_data = {
         "2023-02-06": MockTimeseriesData(10),
         "2023-02-05": MockTimeseriesData(15),
-        "2023-02-04": MockTimeseriesData(20),
+        "2023-02-04": MockTimeseriesData(10),
     }
 
     mocker.patch(
@@ -194,4 +156,4 @@ def test_average_closing_price(mocker):
         lambda _: mocked_ndays_timeseries_data
     )
 
-    assert StockApi(ndays=3).average_closing_price() == 15.0
+    assert StockApi(ndays=3).average_closing_price() == 11.67
