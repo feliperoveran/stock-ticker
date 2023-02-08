@@ -32,7 +32,7 @@ async def startup():
     Instrumentator(env_var_name="ENABLE_METRICS").instrument(app).expose(app)
 
 
-@app.get('/ndays')
+@app.get("/ndays")
 def get_ndays_average(
     response: Response
 ) -> Union[NDaysResponse, Problem]:
@@ -74,4 +74,15 @@ def get_ndays_average(
                 split_coefficient=ndays_timeseries_data[date].split_coefficient
             ) for date in ndays_timeseries_data.keys()
         }
+    )
+
+
+@app.get("/healthz")
+def get_health():
+    return Problem(
+        type="/healthz",
+        title="Health check",
+        status=200,
+        detail="API health check",
+        instance=app.title
     )

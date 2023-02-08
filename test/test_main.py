@@ -1,4 +1,5 @@
-from main import stock_api
+from main import stock_api, app
+from fastapi.testclient import TestClient
 
 
 def test_ndays(mock_api_response):
@@ -60,3 +61,25 @@ def test_ndays_api_exception(mock_api_error_response):
         "title": "Internal Error",
         "type": "/ndays"
     }
+
+
+def test_healthz(mock_api_response):
+    response = mock_api_response.client.get("/healthz")
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "detail": "API health check",
+        "instance": "Stock Ticker",
+        "status": 200,
+        "title": "Health check",
+        "type": "/healthz"
+    }
+
+
+def test_prometheus_metrics():
+    # use as a context manager so the "startup" event handler will run
+    with TestClient(app) as client:
+        prom_response = client.get("/metrics")
+
+        assert prom_response.status_code == 200

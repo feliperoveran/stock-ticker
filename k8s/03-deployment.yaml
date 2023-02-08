@@ -6,7 +6,7 @@ metadata:
   name: stock-ticker
   namespace: forgerock
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: stock-ticker
@@ -52,6 +52,20 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 8000
-          name: default
+          name: api
           protocol: TCP
-        resources: {}
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 100m
+          limits:
+            memory: 128Mi
+            cpu: 200m
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: api
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: api

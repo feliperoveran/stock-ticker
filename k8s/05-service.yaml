@@ -7,7 +7,7 @@ metadata:
   namespace: forgerock
 spec:
   ports:
-  - name: default
+  - name: api
     port: 8000
     protocol: TCP
     targetPort: 8000
