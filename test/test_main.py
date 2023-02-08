@@ -69,11 +69,7 @@ def test_healthz(mock_api_response):
     assert response.status_code == 200
 
     assert response.json() == {
-        "detail": "API health check",
-        "instance": "Stock Ticker",
-        "status": 200,
-        "title": "Health check",
-        "type": "/healthz"
+        "status": "OK"
     }
 
 

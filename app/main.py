@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Response, status
-from typing import Union
 from models import (
     NDaysResponse,
     DailyData,
     Problem,
+    HealthCheck
 )
 from src.stock_api import StockApi
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -32,10 +32,10 @@ async def startup():
     Instrumentator(env_var_name="ENABLE_METRICS").instrument(app).expose(app)
 
 
-@app.get("/ndays")
+@app.get("/ndays", responses={200: {"model": NDaysResponse}, 500: {"model": Problem}})
 def get_ndays_average(
     response: Response
-) -> Union[NDaysResponse, Problem]:
+):
     """
     Response
     """
@@ -77,12 +77,8 @@ def get_ndays_average(
     )
 
 
-@app.get("/healthz")
+@app.get("/healthz", response_model=HealthCheck)
 def get_health():
-    return Problem(
-        type="/healthz",
-        title="Health check",
-        status=200,
-        detail="API health check",
-        instance=app.title
+    return HealthCheck(
+        status="OK"
     )

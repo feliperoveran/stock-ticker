@@ -62,3 +62,11 @@ class Problem(BaseModel):
         description='A URI reference that identifies the specific occurrence of the problem, e.g. by adding a fragment identifier or sub-path to the problem type. May be used to locate the root of this problem in the source code.\n',
         example='/some/uri-reference#specific-occurrence-context',
     )
+
+
+class HealthCheck(BaseModel):
+    status: str = Field(
+        None,
+        description="API status",
+        example="OK"
+    )
